@@ -20,7 +20,7 @@ export function SearchBar({ value, onChange }: Props) {
         style={styles.input}
         onChangeText={onChange}
         value={value}
-        placeholder="Tapez ici..."
+        placeholder="Search..."
       />
     </View>
   );
@@ -30,15 +30,15 @@ const styles = StyleSheet.create({
   wrapper: {
     flexDirection: "row",
     alignItems: "center",
+    flex: 1,
     gap: 8,
     borderRadius: 16,
     height: 32,
     paddingHorizontal: 12,
   },
   input: {
-    height: 16,
+    height: "100%",
     fontSize: 10,
-    lineHeight: 16,
     flex: 1,
   },
 });

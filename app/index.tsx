@@ -17,20 +17,26 @@ import { useFetchQuery, useInfiniteFetchQuery } from "./hooks/useFetchQuery";
 import { getPokemonId } from "./functions/pokemon";
 import { SearchBar } from "./components/SearchBar";
 import { useState } from "react";
+import { SortButton } from "./components/SortButton";
 
 export default function Index() {
   const colors = useThemeColors();
   const { data, isFetching, fetchNextPage } =
     useInfiniteFetchQuery("/pokemon?limit=21");
-  const pokemons = data?.pages.flatMap((page) => page.results) ?? [];
+  const pokemons =
+    data?.pages.flatMap((page) =>
+      page.results.map((r) => ({ name: r.name, id: getPokemonId(r.url) }))
+    ) ?? [];
   const [search, setSearch] = useState("");
-  const filteredPokemons = search
-    ? pokemons.filter(
-        (p) =>
-          p.name.includes(search.toLowerCase()) ||
-          getPokemonId(p.url).toString() === search
-      )
-    : pokemons;
+  const [sortKey, setSortKey] = useState<"id" | "name">("id");
+  const filteredPokemons = [
+    ...(search
+      ? pokemons.filter(
+          (p) =>
+            p.name.includes(search.toLowerCase()) || p.id.toString() === search
+        )
+      : pokemons),
+  ].sort((a, b) => (a[sortKey] < b[sortKey] ? -1 : 1));
 
   return (
     <SafeAreaView
@@ -46,9 +52,10 @@ export default function Index() {
           Pokédex
         </ThemedText>
       </View>
-
-      <SearchBar value={search} onChange={setSearch} />
-
+      <View style={styles.form}>
+        <SearchBar value={search} onChange={setSearch} />
+        <SortButton value={sortKey} onChange={setSortKey} />
+      </View>
       <Card style={styles.body}>
         <FlatList
           data={filteredPokemons}
@@ -61,12 +68,12 @@ export default function Index() {
           onEndReached={search ? undefined : () => fetchNextPage()}
           renderItem={({ item }) => (
             <PokemonCard
-              id={getPokemonId(item.url)}
+              id={item.id}
               name={item.name}
               style={{ flex: 1 / 3 }}
             />
           )}
-          keyExtractor={(item) => item.url}
+          keyExtractor={(item) => item.id.toString()}
         />
       </Card>
     </SafeAreaView>
@@ -83,7 +90,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 16,
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingBottom: 8,
+  },
+  form: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 16,
+    paddingHorizontal: 12,
   },
   body: {
     flex: 1,

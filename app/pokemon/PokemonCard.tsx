@@ -3,6 +3,8 @@ import { Card } from "../components/Card";
 import { ThemedText } from "../components/ThemedText";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { Link } from "expo-router";
+import { getPokemonArtwork } from "../functions/pokemon";
+import { capitalizeFirstLetter } from "../functions/utils";
 
 type Props = {
   style?: ViewStyle;
@@ -24,12 +26,12 @@ export function PokemonCard({ style, id, name }: Props) {
           </ThemedText>
           <Image
             source={{
-              uri: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`,
+              uri: getPokemonArtwork(id),
             }}
             width={72}
             height={72}
           />
-          <ThemedText>{name}</ThemedText>
+          <ThemedText variant="body3">{capitalizeFirstLetter(name)}</ThemedText>
         </Card>
       </Pressable>
     </Link>

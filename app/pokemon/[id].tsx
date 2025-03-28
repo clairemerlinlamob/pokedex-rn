@@ -13,6 +13,7 @@ import { Card } from "../components/Card";
 import { capitalizeFirstLetter } from "../functions/utils";
 import { PokemonType } from "../components/PokemonType";
 import { PokemonSpec } from "../components/PokemonSpec";
+import { PokemonStat } from "../components/PokemonStat";
 
 export default function Pokemon() {
   const params = useLocalSearchParams() as { id: string };
@@ -109,6 +110,16 @@ export default function Pokemon() {
           <ThemedText variant="subtitle1" style={{ color: colorType }}>
             Base stats
           </ThemedText>
+          <View style={styles.stats}>
+            {pokemon?.stats.map((stat) => (
+              <PokemonStat
+                key={stat.stat.name}
+                name={stat.stat.name}
+                value={stat.base_stat}
+                color={colorType}
+              />
+            ))}
+          </View>
         </Card>
       </View>
     </SafeAreaView>
@@ -139,7 +150,11 @@ const styles = StyleSheet.create({
     marginTop: 144,
     paddingHorizontal: 20,
     paddingTop: 60,
+    paddingBottom: 20,
     gap: 16,
     alignItems: "center",
+  },
+  stats: {
+    alignSelf: "stretch",
   },
 });

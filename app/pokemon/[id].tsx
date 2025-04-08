@@ -5,6 +5,7 @@ import { ThemedText } from "../components/ThemedText";
 import { useFetchQuery } from "../hooks/useFetchQuery";
 import { Colors } from "../constants/Colors";
 import {
+  BASE_POKEMON_STATS,
   formatHeight,
   formatWeight,
   getPokemonArtwork,
@@ -14,6 +15,15 @@ import { capitalizeFirstLetter } from "../functions/utils";
 import { PokemonType } from "../components/PokemonType";
 import { PokemonSpec } from "../components/PokemonSpec";
 import { PokemonStat } from "../components/PokemonStat";
+import Animated, {
+  Easing,
+  interpolateColor,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
+import { useEffect } from "react";
 
 export default function Pokemon() {
   const params = useLocalSearchParams() as { id: string };
@@ -29,107 +39,129 @@ export default function Pokemon() {
   const bio = species?.flavor_text_entries
     ?.find(({ language }) => language.name === "en")
     ?.flavor_text.replaceAll("\n", ". ");
+  const stats = pokemon?.stats ?? BASE_POKEMON_STATS;
+
+  const progress = useSharedValue(0);
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      backgroundColor: interpolateColor(
+        progress.value,
+        [0, 1],
+        [colors.primary, colorType]
+      ),
+    };
+  });
+
+  useEffect(() => {
+    progress.value = 0;
+    progress.value = withTiming(1, {
+      duration: 1000,
+      easing: Easing.out(Easing.quad),
+      reduceMotion: ReduceMotion.System,
+    });
+  }, [colorType, colors.primary]);
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colorType }]}>
-      <View>
-        <Image
-          style={styles.pokeball}
-          source={require("../../assets/images/pokeball_big.png")}
-        />
-        <View style={[styles.row, styles.header]}>
-          <View style={styles.row}>
-            <Pressable onPress={router.back}>
-              <Image
-                source={require("../../assets/images/arrow_back.png")}
-                width={32}
-                height={32}
-              />
-            </Pressable>
-            <ThemedText color="white" variant="headline">
-              {capitalizeFirstLetter(pokemon?.name ?? "")}
+    <Animated.View style={[styles.container, animatedStyle]}>
+      <SafeAreaView style={styles.container}>
+        <View>
+          <Image
+            style={styles.pokeball}
+            source={require("../../assets/images/pokeball_big.png")}
+          />
+          <View style={[styles.row, styles.header]}>
+            <View style={styles.row}>
+              <Pressable onPress={router.back}>
+                <Image
+                  source={require("../../assets/images/arrow_back.png")}
+                  width={32}
+                  height={32}
+                />
+              </Pressable>
+              <ThemedText color="white" variant="headline">
+                {capitalizeFirstLetter(pokemon?.name ?? "")}
+              </ThemedText>
+            </View>
+            <ThemedText color="white" variant="subtitle2">
+              #{params.id.padStart(3, "0")}
             </ThemedText>
           </View>
-          <ThemedText color="white" variant="subtitle2">
-            #{params.id.padStart(3, "0")}
-          </ThemedText>
-        </View>
-        <Card style={styles.body}>
-          <Image
-            style={styles.artwork}
-            source={{
-              uri: getPokemonArtwork(params.id),
-            }}
-            width={200}
-            height={200}
-          />
-          <View style={styles.row}>
-            {types.map((type) => (
-              <PokemonType name={type.type.name} key={type.type.name} />
-            ))}
-          </View>
-
-          {/* ABOUT */}
-
-          <ThemedText variant="subtitle1" style={{ color: colorType }}>
-            About
-          </ThemedText>
-          <View style={styles.row}>
-            <PokemonSpec
-              style={{
-                borderStyle: "solid",
-                borderRightWidth: 1,
-                borderColor: colors.grayLight,
+          <Card style={styles.body}>
+            <Image
+              style={styles.artwork}
+              source={{
+                uri: getPokemonArtwork(params.id),
               }}
-              title={formatWeight(pokemon?.weight)}
-              description={"Weight"}
-              image={require("../../assets/images/weight.png")}
+              width={200}
+              height={200}
             />
-            <PokemonSpec
-              style={{
-                borderStyle: "solid",
-                borderRightWidth: 1,
-                borderColor: colors.grayLight,
-              }}
-              title={formatHeight(pokemon?.height)}
-              description={"Height"}
-              image={require("../../assets/images/height.png")}
-            />
-            <PokemonSpec
-              title={pokemon?.moves
-                .slice(0, 2)
-                .map((m) => m.move.name)
-                .join("\n")}
-              description={"Moves"}
-            />
-          </View>
-          <ThemedText>{bio}</ThemedText>
+            <View style={[styles.row, styles.types]}>
+              {types.map((type) => (
+                <PokemonType name={type.type.name} key={type.type.name} />
+              ))}
+            </View>
 
-          {/* BASE STATS */}
+            {/* ABOUT */}
 
-          <ThemedText variant="subtitle1" style={{ color: colorType }}>
-            Base stats
-          </ThemedText>
-          <View style={styles.stats}>
-            {pokemon?.stats.map((stat) => (
-              <PokemonStat
-                key={stat.stat.name}
-                name={stat.stat.name}
-                value={stat.base_stat}
-                color={colorType}
+            <ThemedText variant="subtitle1" style={{ color: colorType }}>
+              About
+            </ThemedText>
+            <View style={styles.row}>
+              <PokemonSpec
+                style={{
+                  borderStyle: "solid",
+                  borderRightWidth: 1,
+                  borderColor: colors.grayLight,
+                }}
+                title={formatWeight(pokemon?.weight)}
+                description={"Weight"}
+                image={require("../../assets/images/weight.png")}
               />
-            ))}
-          </View>
-        </Card>
-      </View>
-    </SafeAreaView>
+              <PokemonSpec
+                style={{
+                  borderStyle: "solid",
+                  borderRightWidth: 1,
+                  borderColor: colors.grayLight,
+                }}
+                title={formatHeight(pokemon?.height)}
+                description={"Height"}
+                image={require("../../assets/images/height.png")}
+              />
+              <PokemonSpec
+                title={pokemon?.moves
+                  ?.slice(0, 2)
+                  ?.map((m: {move: {name: string}}) => m.move.name)
+                  .join("\n") ?? "--"}
+                description={"Moves"}
+              />
+            </View>
+            <ThemedText>{bio}</ThemedText>
+
+            {/* BASE STATS */}
+
+            <ThemedText variant="subtitle1" style={{ color: colorType }}>
+              Base stats
+            </ThemedText>
+            <View style={styles.stats}>
+              {stats.map((stat) => (
+                <PokemonStat
+                  key={stat.stat.name}
+                  name={stat.stat.name}
+                  value={stat.base_stat}
+                  color={colorType}
+                />
+              ))}
+            </View>
+          </Card>
+        </View>
+      </SafeAreaView>
+    </Animated.View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 4,
   },
   header: {
     margin: 20,
@@ -153,8 +185,12 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     gap: 16,
     alignItems: "center",
+    margin: 4,
   },
   stats: {
     alignSelf: "stretch",
+  },
+  types: {
+    height: 20,
   },
 });

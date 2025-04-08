@@ -8,14 +8,14 @@ export function getPokemonArtwork(id: number | string): string {
 
 export function formatWeight(weight?: number) {
   if (!weight) {
-    return "";
+    return "--";
   }
   return (weight / 10).toString().replace(".", ",") + " kg";
 }
 
 export function formatHeight(height?: number) {
   if (!height) {
-    return "";
+    return "--";
   }
   return (height / 10).toString().replace(".", ",") + " m";
 }
@@ -29,3 +29,12 @@ export function statShortName(name: string): string {
     .replaceAll("speed", "SPD")
     .toUpperCase();
 }
+
+export const BASE_POKEMON_STATS = [
+  { base_stat: 0, stat: { name: "HP" } },
+  { base_stat: 0, stat: { name: "ATK" } },
+  { base_stat: 0, stat: { name: "DEF" } },
+  { base_stat: 0, stat: { name: "SATK" } },
+  { base_stat: 0, stat: { name: "SDEF" } },
+  { base_stat: 0, stat: { name: "SPD" } },
+];

@@ -1,5 +1,5 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { SafeAreaView, StyleSheet, Image, View, Pressable } from "react-native";
+import { SafeAreaView, StyleSheet, Image, View, Pressable, Platform } from "react-native";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { ThemedText } from "../components/ThemedText";
 import { useFetchQuery } from "../hooks/useFetchQuery";
@@ -23,14 +23,86 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from "react-native-reanimated";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Audio } from "expo-av";
+import PagerView from "react-native-pager-view";
 
 export default function Pokemon() {
   const params = useLocalSearchParams() as { id: string };
+  const [id, setId] = useState(parseInt(params.id, 10));
+  const offset = useRef(1);
+  const pager = useRef<PagerView>(null);
+
+  const onPageSelected = (e: { nativeEvent: { position: number } }) => {
+    offset.current = e.nativeEvent.position - 1;
+  };
+
+  const onPageScrollStateChanged = (e: { nativeEvent: { pageScrollState: string } }) => {
+    if (e.nativeEvent.pageScrollState !== "idle") {
+      return
+    }
+    if (offset.current === -1 && id === 2) {
+      return
+    }
+    if (offset.current === 1 && id === 200) {
+      return
+    }
+    if (offset.current !== 0) {
+      setId(id + offset.current);
+      offset.current = 0;
+    }
+  };
+
+  useEffect(() => {
+    if (pager.current) {
+      setTimeout(() => {
+        pager.current?.setPageWithoutAnimation(1);
+      }, 0);
+    }
+  }, [id]);
+
+  const onNext = () => {
+    if (offset.current < 1) {
+    
+    pager.current?.setPage(2 + offset.current)  }
+     else if (Platform.OS === "ios") {
+      router.replace({pathname: "/pokemon/[id]", params: {id: Math.min(id + 2, 200)}})
+  }}
+
+  const onPrevious = () => {
+    if (offset.current > -1) {
+      pager.current?.setPage(0) 
+    } else if (Platform.OS === "ios") {
+      router.replace({pathname: "/pokemon/[id]", params: {id: Math.max(id - 2, 1)}})
+    }
+   };
+
+  return (
+    <PagerView
+      ref={pager}
+      initialPage={1}
+      style={{ flex: 1 }}
+      onPageSelected={onPageSelected}
+      onPageScrollStateChanged={onPageScrollStateChanged}
+    >
+      <PokemonView key={id - 1} id={id - 1} onNext={onNext} onPrevious={onPrevious}/>
+      <PokemonView key={id} id={id} onNext={onNext} onPrevious={onPrevious}/>
+      <PokemonView key={id + 1} id={id + 1} onNext={onNext} onPrevious={onPrevious}/>
+    </PagerView> // DOESN'T WORK PROPERLY ON IOS BECAUSE OF THE LIBRARY
+  );
+}
+
+type Props = {
+  id: number;
+  onPrevious: () => void;
+  onNext: () => void;
+}
+
+function PokemonView({ id, onPrevious, onNext }: Props) {
   const colors = useThemeColors();
-  const { data: pokemon } = useFetchQuery("/pokemon/[id]", { id: params.id });
+  const { data: pokemon } = useFetchQuery("/pokemon/[id]", { id: id });
   const { data: species } = useFetchQuery("/pokemon-species/[id]", {
-    id: params.id,
+    id: id,
   });
 
   const mainType = pokemon?.types[0].type.name;
@@ -40,17 +112,22 @@ export default function Pokemon() {
     ?.find(({ language }) => language.name === "en")
     ?.flavor_text.replaceAll("\n", ". ");
   const stats = pokemon?.stats ?? BASE_POKEMON_STATS;
-
+  const isFirst = id === 1;
+  const isLast = id === 200; // 200 IS AN EXAMPLE, WE NEED TO KNOW HAW MANY POKEMONS THERE ARE IN TOTALS
   const progress = useSharedValue(0);
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      backgroundColor: interpolateColor(
-        progress.value,
-        [0, 1],
-        [colors.primary, colorType]
-      ),
+      backgroundColor: interpolateColor(progress.value, [0, 1], [colors.primary, colorType]),
     };
   });
+
+  const onImagePress = async () => {
+    const cry = pokemon?.cries.latest;
+    if (cry) {
+      const { sound } = await Audio.Sound.createAsync({ uri: cry }, { shouldPlay: true });
+      await sound.playAsync(); // WORKS ONLY ON ANDROID BECAUSE POKEAPI ONLY HAVE .ogg AND IT'S NOT SUPPORTED ON IOS
+    }
+  };
 
   useEffect(() => {
     progress.value = 0;
@@ -65,13 +142,10 @@ export default function Pokemon() {
     <Animated.View style={[styles.container, animatedStyle]}>
       <SafeAreaView style={styles.container}>
         <View>
-          <Image
-            style={styles.pokeball}
-            source={require("../../assets/images/pokeball_big.png")}
-          />
+          <Image style={styles.pokeball} source={require("../../assets/images/pokeball_big.png")} />
           <View style={[styles.row, styles.header]}>
             <View style={styles.row}>
-              <Pressable onPress={router.back}>
+              <Pressable onPress={() => router.push("/")}>
                 <Image
                   source={require("../../assets/images/arrow_back.png")}
                   width={32}
@@ -83,20 +157,45 @@ export default function Pokemon() {
               </ThemedText>
             </View>
             <ThemedText color="white" variant="subtitle2">
-              #{params.id.padStart(3, "0")}
+              #{id.toString().padStart(3, "0")}
             </ThemedText>
           </View>
           <Card style={styles.body}>
-            <Image
-              style={styles.artwork}
-              source={{
-                uri: getPokemonArtwork(params.id),
-              }}
-              width={200}
-              height={200}
-            />
+            <View style={[styles.row, styles.artwork, styles.swipe]}>
+              {isFirst ? (
+                <View style={styles.chevron} />
+              ) : (
+                <Pressable onPress={onPrevious}>
+                  <Image
+                    source={require("../../assets/images/chevron_left.png")}
+                    width={24}
+                    height={24}
+                  />
+                </Pressable>
+              )}
+              <Pressable onPress={onImagePress}>
+                <Image
+                  source={{
+                    uri: getPokemonArtwork(id),
+                  }}
+                  width={200}
+                  height={200}
+                />
+              </Pressable>
+              {isLast ? (
+                <View style={styles.chevron} />
+              ) : (
+                <Pressable onPress={onNext}>
+                  <Image
+                    source={require("../../assets/images/chevron_right.png")}
+                    width={24}
+                    height={24}
+                  />
+                </Pressable>
+              )}
+            </View>
             <View style={[styles.row, styles.types]}>
-              {types.map((type) => (
+              {types.map(type => (
                 <PokemonType name={type.type.name} key={type.type.name} />
               ))}
             </View>
@@ -128,10 +227,12 @@ export default function Pokemon() {
                 image={require("../../assets/images/height.png")}
               />
               <PokemonSpec
-                title={pokemon?.moves
-                  ?.slice(0, 2)
-                  ?.map((m: {move: {name: string}}) => m.move.name)
-                  .join("\n") ?? "--"}
+                title={
+                  pokemon?.moves
+                    ?.slice(0, 2)
+                    ?.map((m: { move: { name: string } }) => m.move.name)
+                    .join("\n") ?? "--"
+                }
                 description={"Moves"}
               />
             </View>
@@ -143,7 +244,7 @@ export default function Pokemon() {
               Base stats
             </ThemedText>
             <View style={styles.stats}>
-              {stats.map((stat) => (
+              {stats.map(stat => (
                 <PokemonStat
                   key={stat.stat.name}
                   name={stat.stat.name}
@@ -171,6 +272,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
+  },
+  swipe: {
+    justifyContent: "space-between",
+    left: 0,
+    right: 0,
+    paddingHorizontal: 20,
+  },
+  chevron: {
+    width: 24,
+    height: 24,
   },
   pokeball: { position: "absolute", right: 8, top: 8 },
   artwork: {

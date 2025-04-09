@@ -13,6 +13,7 @@ import { ThemedText } from "./ThemedText";
 import { Card } from "./Card";
 import { Radio } from "./Radio";
 import { Shadows } from "../constants/Shadows";
+import React from "react";
 
 type Props = {
   value: "id" | "name";

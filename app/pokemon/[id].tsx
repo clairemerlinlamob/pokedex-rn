@@ -110,7 +110,7 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
   const types = pokemon?.types ?? [];
   const bio = species?.flavor_text_entries
     ?.find(({ language }) => language.name === "en")
-    ?.flavor_text.replaceAll("\n", ". ");
+    ?.flavor_text.replaceAll("\n", " ");
   const stats = pokemon?.stats ?? BASE_POKEMON_STATS;
   const isFirst = id === 1;
   const isLast = id === 200; // 200 IS AN EXAMPLE, WE NEED TO KNOW HAW MANY POKEMONS THERE ARE IN TOTALS
@@ -137,6 +137,7 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
       reduceMotion: ReduceMotion.System,
     });
   }, [colorType, colors.primary]);
+console.log(species?.flavor_text_entries.find(({ language }) => language.name === "en"));
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
@@ -230,7 +231,7 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
                 title={
                   pokemon?.moves
                     ?.slice(0, 2)
-                    ?.map((m: { move: { name: string } }) => m.move.name)
+                    ?.map((m: { move: { name: string } }) => capitalizeFirstLetter(m.move.name.replaceAll("-", " ")))
                     .join("\n") ?? "--"
                 }
                 description={"Moves"}

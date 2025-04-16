@@ -7,7 +7,16 @@ type API = {
   "/pokemon?limit=21": {
     count: number;
     next: string | null;
-    results: { name: string; url: string }[];
+    results: { 
+      name: string; 
+      url: string;
+      names?: {
+        name: string;
+        language: {
+          name: string;
+        };
+      }[];
+    }[];
   };
   "/pokemon/[id]": {
     id: number;
@@ -26,9 +35,25 @@ type API = {
       };
     }[];
   };
+  "/type/[id]": {
+    id: number;
+    name: keyof (typeof Colors)["type"];
+    names: {
+      name: string;
+      language: {
+        name: string;
+      };
+    }[];
+  };
   "/pokemon-species/[id]": {
     flavor_text_entries: {
       flavor_text: string;
+      language: {
+        name: string;
+      };
+    }[];
+    names: {
+      name: string;
       language: {
         name: string;
       };
@@ -42,8 +67,8 @@ export function useFetchQuery<T extends keyof API>(
 ) {
   const localUrl =
     endpoint +
-    Object.entries(params ?? {}).reduce(
-      (acc, [key, value]) => acc.replaceAll(`[${key}]`, value),
+    Object.entries(params ?? {}).reduce<string>(
+      (acc, [key, value]) => acc.replaceAll(`[${key}]`, String(value)),
       path
     );
   return useQuery({

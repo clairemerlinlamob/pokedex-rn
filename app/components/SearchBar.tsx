@@ -10,7 +10,7 @@ export function SearchBar({ value, onChange }: Props) {
   const colors = useThemeColors();
 
   return (
-    <View style={[styles.wrapper, { backgroundColor: colors.white }]}>
+    <View style={[styles.wrapper, { backgroundColor: colors.white}]}>
       <Image
         source={require("../../assets/images/search.png")}
         width={16}

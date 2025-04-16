@@ -15,6 +15,9 @@ import { capitalizeFirstLetter } from "../functions/utils";
 import { PokemonType } from "../components/PokemonType";
 import { PokemonSpec } from "../components/PokemonSpec";
 import { PokemonStat } from "../components/PokemonStat";
+import { LanguageButton } from "../components/LanguageButton";
+import { useLanguage } from "../context/LanguageContext";
+import { useTranslation } from "react-i18next";
 import Animated, {
   Easing,
   interpolateColor,
@@ -100,6 +103,8 @@ type Props = {
 
 function PokemonView({ id, onPrevious, onNext }: Props) {
   const colors = useThemeColors();
+  const { language, setLanguage } = useLanguage();
+  const { t } = useTranslation();
   const { data: pokemon } = useFetchQuery("/pokemon/[id]", { id: id });
   const { data: species } = useFetchQuery("/pokemon-species/[id]", {
     id: id,
@@ -109,8 +114,11 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
   const colorType = mainType ? Colors.type[mainType] : colors.primary;
   const types = pokemon?.types ?? [];
   const bio = species?.flavor_text_entries
-    ?.find(({ language }) => language.name === "en")
+    ?.find(({ language: lang }) => lang.name === language)
     ?.flavor_text.replaceAll("\n", " ");
+  const pokemonName = species?.names
+    ?.find(({ language: lang }) => lang.name === language)
+    ?.name ?? pokemon?.name ?? "";
   const stats = pokemon?.stats ?? BASE_POKEMON_STATS;
   const isFirst = id === 1;
   const isLast = id === 200; // 200 IS AN EXAMPLE, WE NEED TO KNOW HAW MANY POKEMONS THERE ARE IN TOTALS
@@ -137,7 +145,6 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
       reduceMotion: ReduceMotion.System,
     });
   }, [colorType, colors.primary]);
-console.log(species?.flavor_text_entries.find(({ language }) => language.name === "en"));
 
   return (
     <Animated.View style={[styles.container, animatedStyle]}>
@@ -154,12 +161,18 @@ console.log(species?.flavor_text_entries.find(({ language }) => language.name ==
                 />
               </Pressable>
               <ThemedText color="white" variant="headline">
-                {capitalizeFirstLetter(pokemon?.name ?? "")}
+                {capitalizeFirstLetter(pokemonName)}
               </ThemedText>
             </View>
-            <ThemedText color="white" variant="subtitle2">
-              #{id.toString().padStart(3, "0")}
-            </ThemedText>
+            <View style={styles.row}>
+              <ThemedText color="white" variant="subtitle2">
+                #{id.toString().padStart(3, "0")}
+              </ThemedText>
+              <LanguageButton 
+                language={language} 
+                onPress={() => setLanguage(language === "en" ? "fr" : "en")} 
+              />
+            </View>
           </View>
           <Card style={styles.body}>
             <View style={[styles.row, styles.artwork, styles.swipe]}>
@@ -197,14 +210,17 @@ console.log(species?.flavor_text_entries.find(({ language }) => language.name ==
             </View>
             <View style={[styles.row, styles.types]}>
               {types.map(type => (
-                <PokemonType name={type.type.name} key={type.type.name} />
+                <PokemonType 
+                  name={type.type.name} 
+                  key={type.type.name}
+                />
               ))}
             </View>
 
             {/* ABOUT */}
 
             <ThemedText variant="subtitle1" style={{ color: colorType }}>
-              About
+              {t("common.about")}
             </ThemedText>
             <View style={styles.row}>
               <PokemonSpec
@@ -214,7 +230,7 @@ console.log(species?.flavor_text_entries.find(({ language }) => language.name ==
                   borderColor: colors.grayLight,
                 }}
                 title={formatWeight(pokemon?.weight)}
-                description={"Weight"}
+                description={t("common.weight")}
                 image={require("../../assets/images/weight.png")}
               />
               <PokemonSpec
@@ -224,7 +240,7 @@ console.log(species?.flavor_text_entries.find(({ language }) => language.name ==
                   borderColor: colors.grayLight,
                 }}
                 title={formatHeight(pokemon?.height)}
-                description={"Height"}
+                description={t("common.height")}
                 image={require("../../assets/images/height.png")}
               />
               <PokemonSpec
@@ -234,7 +250,7 @@ console.log(species?.flavor_text_entries.find(({ language }) => language.name ==
                     ?.map((m: { move: { name: string } }) => capitalizeFirstLetter(m.move.name.replaceAll("-", " ")))
                     .join("\n") ?? "--"
                 }
-                description={"Moves"}
+                description={t("common.moves")}
               />
             </View>
             <ThemedText>{bio}</ThemedText>
@@ -242,7 +258,7 @@ console.log(species?.flavor_text_entries.find(({ language }) => language.name ==
             {/* BASE STATS */}
 
             <ThemedText variant="subtitle1" style={{ color: colorType }}>
-              Base stats
+              {t("common.baseStats")}
             </ThemedText>
             <View style={styles.stats}>
               {stats.map(stat => (

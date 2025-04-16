@@ -2,6 +2,7 @@ import { StyleSheet, View, ViewProps } from "react-native";
 import { ThemedText } from "./ThemedText";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { statShortName } from "../functions/pokemon";
+import { useTranslation } from "react-i18next";
 import Animated, { 
   useAnimatedStyle, 
   useSharedValue, 
@@ -18,6 +19,7 @@ type Props = ViewProps & {
 
 export function PokemonStat({ style, name, value, color, ...rest }: Props) {
   const colors = useThemeColors();
+  const { t } = useTranslation();
   const progress = useSharedValue(0);
   
   const barStyle = useAnimatedStyle(() => {

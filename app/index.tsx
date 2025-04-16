@@ -18,9 +18,13 @@ import { getPokemonId } from "./functions/pokemon";
 import { SearchBar } from "./components/SearchBar";
 import { useState } from "react";
 import { SortButton } from "./components/SortButton";
+import { LanguageButton } from "./components/LanguageButton";
+import { ThemeToggle } from "./components/ThemeToggle";
+import { useLanguage } from "./context/LanguageContext";
 
 export default function Index() {
   const colors = useThemeColors();
+  const { language, setLanguage } = useLanguage();
   const { data, isFetching, fetchNextPage } =
     useInfiniteFetchQuery("/pokemon?limit=21");
   const pokemons =
@@ -43,14 +47,23 @@ export default function Index() {
       style={[styles.container, { backgroundColor: colors.primary }]}
     >
       <View style={styles.header}>
-        <Image
-          source={require("../assets/images/pokeball.png")}
-          width={24}
-          height={24}
-        />
-        <ThemedText variant="headline" color="grayLight">
-          Pokédex
-        </ThemedText>
+        <View style={styles.row}>
+          <Image
+            source={require("../assets/images/pokeball.png")}
+            width={24}
+            height={24}
+          />
+          <ThemedText variant="headline" color="white">
+            Pokédex
+          </ThemedText>
+        </View>
+        <View style={styles.row}>
+          <ThemeToggle />
+          <LanguageButton 
+            language={language} 
+            onPress={() => setLanguage(language === "en" ? "fr" : "en")} 
+          />
+        </View>
       </View>
       <View style={styles.form}>
         <SearchBar value={search} onChange={setSearch} />
@@ -83,29 +96,32 @@ export default function Index() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 4,
   },
   header: {
+    margin: 20,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    paddingHorizontal: 12,
-    paddingBottom: 8,
+    gap: 8,
   },
   form: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 16,
-    paddingHorizontal: 12,
+    gap: 8,
+    marginHorizontal: 20,
+    marginBottom: 20,
   },
   body: {
     flex: 1,
-    marginTop: 16,
+    margin: 4,
   },
   gridgap: {
     gap: 8,
   },
   list: {
-    padding: 12,
+    padding: 8,
   },
 });

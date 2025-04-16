@@ -8,11 +8,11 @@ import {
   Dimensions,
 } from "react-native";
 import { useThemeColors } from "../hooks/useThemeColors";
+import { useShadows } from "../hooks/useShadows";
 import { useRef, useState } from "react";
 import { ThemedText } from "./ThemedText";
 import { Card } from "./Card";
 import { Radio } from "./Radio";
-import { Shadows } from "../constants/Shadows";
 import React from "react";
 
 type Props = {
@@ -28,6 +28,7 @@ const options = [
 export function SortButton({ value, onChange }: Props) {
   const buttonRef = useRef<View>(null);
   const colors = useThemeColors();
+  const shadows = useShadows();
   const [isModalVisible, setModalVisibility] = useState(false);
   const [position, setPosition] = useState<null | {
     top: number;
@@ -53,7 +54,7 @@ export function SortButton({ value, onChange }: Props) {
       <Pressable onPress={onButtonPress}>
         <View
           ref={buttonRef}
-          style={[styles.button, { backgroundColor: colors.white }]}
+          style={[styles.button, { backgroundColor: colors.white, ...shadows.dp2 }]}
         >
           <Image
             source={
@@ -76,7 +77,7 @@ export function SortButton({ value, onChange }: Props) {
         <View
           style={[
             styles.popup,
-            { backgroundColor: colors.primary, ...position },
+            { backgroundColor: colors.primary, ...position, ...shadows.dp2 },
           ]}
         >
           <ThemedText style={styles.title} variant="subtitle2" color="white">
@@ -119,7 +120,6 @@ const styles = StyleSheet.create({
     gap: 16,
     position: "absolute",
     width: 113,
-    ...Shadows.dp2,
   },
   title: {
     paddingLeft: 20,

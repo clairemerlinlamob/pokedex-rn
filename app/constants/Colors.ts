@@ -4,20 +4,22 @@ export const Colors = {
     background: "#FFFFFF",
     cardBackground: "#EFEFEF",
     white: "#FFFFFF",
+    black: "#000000",
     grayDark: "#212121",
     grayMedium: "#666666",
     grayLight: "#E0E0E0",
     shadowColor: "#000000",
   },
   dark: {
-    primary: "#8B0000",  // Rouge foncé
-    background: "#121212",  // Fond sombre
-    cardBackground: "#333333",  // Fond sombre pour les cartes
-    white: "#FFFFFF",  // Blanc pour le texte
-    grayDark: "#E0E0E0",  // Gris clair pour les textes sombres
-    grayMedium: "#B0B0B0",  // Gris moyen pour les éléments secondaires
-    grayLight: "#666666",  // Gris foncé pour des éléments de texte ou autres
-    shadowColor: "#FFFFFF",
+    primary: "#8B1E2D", // 🔴 Rouge foncé, doux pour les yeux en fond
+    background: "#121212", // Fond secondaire ou global
+    cardBackground: "#1E1E1E", // Fond des cartes (sur primary)
+    white: "#FFFFFF",
+    black: "#000000",
+    grayDark: "#E0E0E0", // Texte clair
+    grayMedium: "#AAAAAA", // Texte secondaire
+    grayLight: "#333333", // Éléments décoratifs ou bordures
+    shadowColor: "#000000",
   },
   type: {
     bug: "#A7B723",

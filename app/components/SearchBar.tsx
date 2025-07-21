@@ -1,5 +1,6 @@
 import { Image, StyleSheet, TextInput, View } from "react-native";
 import { useThemeColors } from "../hooks/useThemeColors";
+import { useTheme } from "../context/ThemeContext";
 
 type Props = {
   value: string;
@@ -8,16 +9,14 @@ type Props = {
 
 export function SearchBar({ value, onChange }: Props) {
   const colors = useThemeColors();
+  const { theme } = useTheme();
 
   return (
-    <View style={[styles.wrapper, { backgroundColor: colors.white}]}>
-      <Image
-        source={require("../../assets/images/search.png")}
-        width={16}
-        height={16}
-      />
+    <View style={[styles.wrapper, { backgroundColor: colors.background }]}>
+      <Image source={require("../../assets/images/search.png")} width={16} height={16} />
       <TextInput
-        style={styles.input}
+        placeholderTextColor={colors.grayMedium}
+        style={[styles.input, { color: theme === "dark" ? colors.white : "black" }]}
         onChangeText={onChange}
         value={value}
         placeholder="Search..."

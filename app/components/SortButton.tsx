@@ -1,12 +1,4 @@
-import {
-  Image,
-  Modal,
-  Pressable,
-  StyleSheet,
-  View,
-  Text,
-  Dimensions,
-} from "react-native";
+import { Image, Modal, Pressable, StyleSheet, View, Text, Dimensions } from "react-native";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { useShadows } from "../hooks/useShadows";
 import { useRef, useState } from "react";
@@ -54,7 +46,7 @@ export function SortButton({ value, onChange }: Props) {
       <Pressable onPress={onButtonPress}>
         <View
           ref={buttonRef}
-          style={[styles.button, { backgroundColor: colors.white, ...shadows.dp2 }]}
+          style={[styles.button, { backgroundColor: colors.background, ...shadows.dp2 }]}
         >
           <Image
             source={
@@ -67,29 +59,17 @@ export function SortButton({ value, onChange }: Props) {
           />
         </View>
       </Pressable>
-      <Modal
-        transparent
-        animationType="fade"
-        visible={isModalVisible}
-        onRequestClose={onClose}
-      >
+      <Modal transparent animationType="fade" visible={isModalVisible} onRequestClose={onClose}>
         <Pressable style={styles.backdrop} onPress={onClose} />
         <View
-          style={[
-            styles.popup,
-            { backgroundColor: colors.primary, ...position, ...shadows.dp2 },
-          ]}
+          style={[styles.popup, { backgroundColor: colors.primary, ...position, ...shadows.dp2 }]}
         >
           <ThemedText style={styles.title} variant="subtitle2" color="white">
             Sort by :
           </ThemedText>
           <Card style={styles.card}>
-            {options.map((o) => (
-              <Pressable
-                key={o.value}
-                style={styles.filter}
-                onPress={() => onChange(o.value)}
-              >
+            {options.map(o => (
+              <Pressable key={o.value} style={styles.filter} onPress={() => onChange(o.value)}>
                 <Radio checked={o.value === value} />
                 <ThemedText>{o.label}</ThemedText>
               </Pressable>

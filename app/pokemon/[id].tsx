@@ -1,8 +1,21 @@
 import { router, useLocalSearchParams } from "expo-router";
-import { SafeAreaView, StyleSheet, Image, View, Pressable, Platform } from "react-native";
+import {
+  SafeAreaView,
+  StyleSheet,
+  Image,
+  View,
+  Pressable,
+  Platform,
+  ScrollView,
+} from "react-native";
 import { useThemeColors } from "../hooks/useThemeColors";
 import { ThemedText } from "../components/ThemedText";
-import { useFetchQuery } from "../hooks/useFetchQuery";
+import {
+  getPokemonEvolutions,
+  PokemonEvolution,
+  useFetchQuery,
+  useEvolutionSpecies,
+} from "../hooks/useFetchQuery";
 import { Colors } from "../constants/Colors";
 import {
   BASE_POKEMON_STATS,
@@ -31,6 +44,7 @@ import { Audio } from "expo-av";
 import PagerView from "react-native-pager-view";
 import { useTheme } from "../context/ThemeContext";
 import { ThemeToggle } from "../components/ThemeToggle";
+import React from "react";
 
 export default function Pokemon() {
   const params = useLocalSearchParams() as { id: string };
@@ -138,6 +152,9 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
   const { data: species } = useFetchQuery("/pokemon-species/[id]", {
     id: id,
   });
+  const evolutions: PokemonEvolution[] | undefined = getPokemonEvolutions(
+    Number(species?.evolution_chain?.url?.split("/").slice(0, -1).pop()) ?? 0
+  );
 
   const mainType = pokemon?.types?.[0]?.type?.name;
   const colorType = mainType ? Colors.type[mainType] : colors.primary;
@@ -160,6 +177,8 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
       await sound.playAsync();
     }
   };
+
+  const speciesQueries = useEvolutionSpecies(evolutions?.map(evo => evo.id) ?? []);
 
   return (
     <View style={styles.container}>
@@ -223,67 +242,102 @@ function PokemonView({ id, onPrevious, onNext }: Props) {
               </Pressable>
             )}
           </View>
-          <View style={[styles.row, styles.types]}>
-            {types.map(type => (
-              <PokemonType name={type.type.name} key={type.type.name} />
-            ))}
-          </View>
+          <ScrollView
+            contentContainerStyle={{ alignItems: "center", gap: 16 }}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={[styles.row, styles.types]}>
+              {types.map(type => (
+                <PokemonType name={type.type.name} key={type.type.name} />
+              ))}
+            </View>
 
-          {/* ABOUT */}
+            {/* ABOUT */}
 
-          <ThemedText variant="subtitle1" style={{ color: colorType }}>
-            {t("common.about")}
-          </ThemedText>
-          <View style={styles.row}>
-            <PokemonSpec
-              style={{
-                borderStyle: "solid",
-                borderRightWidth: 1,
-                borderColor: colors.grayLight,
-              }}
-              title={formatWeight(pokemon?.weight)}
-              description={t("common.weight")}
-              image={require("../../assets/images/weight.png")}
-            />
-            <PokemonSpec
-              style={{
-                borderStyle: "solid",
-                borderRightWidth: 1,
-                borderColor: colors.grayLight,
-              }}
-              title={formatHeight(pokemon?.height)}
-              description={t("common.height")}
-              image={require("../../assets/images/height.png")}
-            />
-            <PokemonSpec
-              title={
-                pokemon?.moves
-                  ?.slice(0, 2)
-                  ?.map((m: { move: { name: string } }) =>
-                    capitalizeFirstLetter(m.move.name.replaceAll("-", " "))
-                  )
-                  .join("\n") ?? "--"
-              }
-              description={t("common.moves")}
-            />
-          </View>
-          <ThemedText>{bio}</ThemedText>
-
-          {/* BASE STATS */}
-
-          <ThemedText variant="subtitle1" style={{ color: colorType }}>
-            {t("common.baseStats")}
-          </ThemedText>
-          <View style={styles.stats}>
-            {stats.map(stat => (
-              <PokemonStat
-                key={stat.stat.name}
-                name={stat.stat.name}
-                value={stat.base_stat}
-                color={colorType}
+            <ThemedText variant="subtitle1" style={{ color: colorType }}>
+              {t("common.about")}
+            </ThemedText>
+            <View style={styles.row}>
+              <PokemonSpec
+                style={{
+                  borderStyle: "solid",
+                  borderRightWidth: 1,
+                  borderColor: colors.grayLight,
+                }}
+                title={formatWeight(pokemon?.weight)}
+                description={t("common.weight")}
+                image={require("../../assets/images/weight.png")}
               />
-            ))}
-          </View>
+              <PokemonSpec
+                style={{
+                  borderStyle: "solid",
+                  borderRightWidth: 1,
+                  borderColor: colors.grayLight,
+                }}
+                title={formatHeight(pokemon?.height)}
+                description={t("common.height")}
+                image={require("../../assets/images/height.png")}
+              />
+              <PokemonSpec
+                title={
+                  pokemon?.moves
+                    ?.slice(0, 2)
+                    ?.map((m: { move: { name: string } }) =>
+                      capitalizeFirstLetter(m.move.name.replaceAll("-", " "))
+                    )
+                    .join("\n") ?? "--"
+                }
+                description={t("common.moves")}
+              />
+            </View>
+            <ThemedText>{bio}</ThemedText>
+
+            {/* BASE STATS */}
+
+            <ThemedText variant="subtitle1" style={{ color: colorType }}>
+              {t("common.baseStats")}
+            </ThemedText>
+            <View style={styles.stats}>
+              {stats.map(stat => (
+                <PokemonStat
+                  key={stat.stat.name}
+                  name={stat.stat.name}
+                  value={stat.base_stat}
+                  color={colorType}
+                />
+              ))}
+            </View>
+
+            {/* EVOLUTIONS */}
+
+            <ThemedText variant="subtitle1" style={{ color: colorType }}>
+              {t("common.evolutions")}
+            </ThemedText>
+            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+              {evolutions?.map((evo: any, idx: number, arr: any[]) => {
+                const names = speciesQueries[idx]?.data?.names;
+                const localizedName =
+                  names?.find((n: any) => n.language.name === language)?.name || evo.names[0].name;
+                return (
+                  <React.Fragment key={evo.id}>
+                    <View>
+                      <Image
+                        source={{
+                          uri: getPokemonArtwork(evo.id),
+                        }}
+                        width={80}
+                        height={80}
+                      />
+                      <ThemedText>{localizedName}</ThemedText>
+                    </View>
+                    {idx < arr.length - 1 && (
+                      <ThemedText style={{ fontSize: 16, marginHorizontal: 4 }}>→</ThemedText>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </View>
+          </ScrollView>
         </Card>
       </View>
     </View>
